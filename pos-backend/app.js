@@ -39,3 +39,11 @@ app.use(globalErrorHandler);
 app.listen(PORT, () => {
     console.log(`POS Server is listening on port ${PORT}`);
 })
+
+// At the bottom of app.js:
+module.exports = app;
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = config.port || 8000;
+  app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+}
