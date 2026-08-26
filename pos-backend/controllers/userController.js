@@ -7,26 +7,40 @@ const config = require("../config/config");
 
 const register = async (req, res, next) => {
     try {
-
-
         const { name, phone, email, password, role } = req.body;
 
         if(!name || !phone || !email || !password || !role){
-            const error = createHttpError(400, "All field are required!");
+            const error = createHttpError(400, "All fields are required!");
             return next(error);
         }
 
         const isUserPresent = await User.findOne({email});
         if(isUserPresent){
-            const error = createHttpError(400, "User already exist!");
-           return next(error);
+            const error = createHttpError(400, "User already exists!");
+            return next(error);
         }
 
-        const user = { name, phone, email, password, role }
-        const newUser = User(user);
+        // 1. Hash the password before saving
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({ 
+            name, 
+            phone, 
+            email, 
+            password: hashedPassword, 
+            role 
+        });
+
         await newUser.save();
 
-        res.status(201).json({success: true, message: "New User Created!", data: newUser});
+        // 2. Hide password from response payload
+        newUser.password = undefined;
+
+        res.status(201).json({
+            success: true, 
+            message: "New User Created!", 
+            data: newUser
+        });
 
     } catch (error) {
         next(error);
@@ -89,8 +103,12 @@ const getUserData = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
     try {
-        res.clearCookie('accessToken');
-        res.status(200).json({success: true, message: "User logout Successfully!"})
+        res.clearCookie('accessToken', {
+            httpOnly: true,
+            sameSite: 'none',
+            secure: true
+        });
+        res.status(200).json({success: true, message: "User logged out successfully!"});
     } catch (error) {
         next(error);
     }
