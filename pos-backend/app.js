@@ -24,10 +24,27 @@ app.use(cookieParser());
 
 // Dynamic CORS logic handling local dev and production frontend
 const allowedOrigins = [
-    'http://localhost:5173',
-    'https://restaurant-pos-system-blush.vercel.app',
-    process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : null
+  'http://localhost:5173',
+  'https://restaurant-pos-system-blush.vercel.app',
+  process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : null
 ].filter(Boolean);
+
+// Enable pre-flight across all routes
+app.options('*', cors());
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
+
 
 app.use(cors({
     origin: (origin, callback) => {
